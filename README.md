@@ -1,36 +1,186 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Myra – Your Voice-Based AI Friend
 
-## Getting Started
+Myra is a warm, loving AI companion that interacts with users through natural voice conversations. Built using **Next.js**, **React**, **Tailwind CSS**, **OpenRouter (Mistral 7B Instruct)**, **Google News RSS**, and **WTTR Weather API**, Myra provides personalized chat responses, reads the latest news, explains headlines on request, and adapts its tone based on time and contextual information.
 
-First, run the development server:
+---
+
+## 🚀 Features
+
+### 🌸 AI Personality
+
+Myra behaves like a caring female friend, offering:
+
+* Supportive and empathetic responses
+* Time-based tone adjustment (morning, afternoon, night)
+* Weather‑aware greetings and context
+* Personalized conversation using stored user details (name, city, tone preference)
+
+### 🎤 Voice Interaction (Main Highlight)
+
+* Voice input using browser SpeechRecognition
+* Smooth voice replies using SpeechSynthesis API
+* Hands‑free conversation mode
+
+### 📰 Smart News Handling
+
+Myra fetches top headlines using Google News RSS:
+
+* Reads headlines aloud
+* Users can say: “Explain news 1”, “explain headline 3”…
+* Myra explains the selected news story in detail using Mistral 7B
+
+### ⛅ Real-Time Weather Context
+
+Uses WTTR API to gather:
+
+* Temperature
+* Weather description
+* Weather-aware conversational tone
+
+### 🤖 LLM Powered
+
+Uses **OpenRouter Mistral 7B Instruct (Free Tier)** for:
+
+* Conversation responses
+* News explanation
+* Natural language processing
+
+---
+
+## 🧩 Tech Stack
+
+| Layer           | Technology                             |
+| --------------- | -------------------------------------- |
+| Frontend        | Next.js 16, React, Tailwind CSS        |
+| AI Model        | Mistral 7B Instruct via OpenRouter API |
+| Voice           | Web Speech API (STT + TTS)             |
+| News            | Google News RSS Feed                   |
+| Weather         | WTTR (text-based weather API)          |
+| Hosting         | Vercel (Free Tier)                     |
+| Version Control | Git & GitHub                           |
+
+---
+
+## 🔧 Setup Instructions
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/siyad01/myra.git
+cd myra
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+### 3️⃣ Add Environment Variables
+
+Create `.env.local` in the root directory:
+
+```
+OPENROUTER_API_KEY=your_key_here
+```
+
+### 4️⃣ Run Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Now open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ☁️ Deployment on Vercel
 
-To learn more about Next.js, take a look at the following resources:
+### Step 1 — Push to GitHub
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+git init
+git add .
+git commit -m "Initial Myra commit"
+git branch -M main
+git remote add origin https://github.com/siyad01/myra.git
+git push -u origin main
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Step 2 — Deploy
 
-## Deploy on Vercel
+1. Go to **vercel.com**
+2. Click **New Project**
+3. Import your GitHub repo
+4. Create ".env" & Add environment variables:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   * `NEXT_PUBLIC_OPENROUTER_API_KEY`
+5. Select **Next.js** framework (auto-detected)
+6. Click **Deploy**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Step 3 — Done!
+
+Vercel builds your app and gives you a live URL.
+
+---
+
+## 🎙 How Voice Mode Works
+
+### Speech-to-Text
+
+Uses browser `SpeechRecognition` API:
+
+* Converts user's voice into text
+* Auto-stops when user finishes speaking
+
+### Text-to-Speech
+
+Using `window.speechSynthesis`:
+
+* Myra reads every response aloud
+* Natural, soft female tone
+
+### Conversation Loop
+
+1. User speaks
+2. App converts voice → text
+3. Sends text + context to OpenRouter
+4. Myra returns warm response
+5. App speaks the answer aloud
+
+---
+
+## 🎯 Roadmap
+
+* Add continuous listening mode
+* Add multi-language voice support
+* Add whisper-based transcription
+* Add optional background music for ambience
+* Add user profile page (saved preferences)
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome.
+
+---
+
+## 📜 License
+
+MIT License.
+
+---
+
+## 💖 Acknowledgements
+
+* OpenRouter (Mistral 7B Instruct)
+* WTTR Weather API
+* Google News RSS
+* Next.js Team
+* Vercel Hosting
+* Web Speech API
