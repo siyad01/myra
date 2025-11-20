@@ -262,8 +262,8 @@ How are you feeling today, darling?`;
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="w-full max-w-md space-y-8">
             <div className="text-center">
-              <h2 className="text-6xl font-light">Hello</h2>
-              <p className="text-gray-500 mt-3 text-2xl">I&apos;m Myra, your friend</p>
+              <h2 className="text-3xl font-light">Hello</h2>
+              <p className="text-gray-500 mt-3 text-xl">I&apos;m Myra, your friend</p>
             </div>
             <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)}
               className="w-full px-5 py-5 bg-gray-900 border border-gray-800 rounded-2xl focus:outline-none focus:border-gray-600 text-center text-xl" autoFocus />
@@ -280,7 +280,7 @@ How are you feeling today, darling?`;
         <>
           {/* Hero with Weather Loading */}
           <div className="py-10 text-center flex-1 flex flex-col items-center justify-center px-6">
-            <h1 className="text-6xl md:text-8xl font-light leading-tight mb-2">Hello, {name}</h1>
+            <h1 className="text-4xl md:text-6xl font-light leading-tight mb-2">Hello, {name}</h1>
             <p className="text-2xl text-gray-400 mb-6">{city}</p>
 
             {isWeatherLoading ? (
