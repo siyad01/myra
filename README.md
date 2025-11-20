@@ -116,7 +116,7 @@ git push -u origin main
 1. Go to **vercel.com**
 2. Click **New Project**
 3. Import your GitHub repo
-4. Create ".env" & Add environment variables:
+4. Add environment variables:
 
    * `NEXT_PUBLIC_OPENROUTER_API_KEY`
 5. Select **Next.js** framework (auto-detected)
