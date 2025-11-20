@@ -7,7 +7,7 @@ import { Mic, Send, CloudRain, Cloud, Sun, Wind, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "",
+  apiKey: process.env.OPENROUTER_API_KEY || "",
   baseURL: "https://openrouter.ai/api/v1",
   dangerouslyAllowBrowser: true,
 });
