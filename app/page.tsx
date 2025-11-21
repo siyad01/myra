@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -118,6 +119,7 @@ export default function Home() {
   };
 
   const readNews = async (scope: "local" | "country" | "world" = "local") => {
+    const timeouts: NodeJS.Timeout[] = [];
 
     try {
       const headlines = await getNews(scope);
@@ -136,19 +138,21 @@ export default function Home() {
       speak(intro);
 
       headlines.forEach((h: string, i: number) => {
-        setTimeout(() => {
+        const timeout = setTimeout(() => {
           const line = `${i + 1}. ${h}`;
           setMessages(prev => [...prev, { role: "assistant", text: line }]);
           speak(line);
         }, (i + 1) * 7500);
+        timeouts.push(timeout)
       });
     } catch (error) {
       console.error("News reading failed:", error);
       setMessages(prev => [...prev, { role: "assistant", text: "I'm having a little trouble reading the news right now, darling." }]);
       speak("I'm having a little trouble reading the news right now, darling.");
     }
-  // DO NOT TOUCH isProcessing.current HERE
-  // Let handleInput control it!
+    return () => {
+      timeouts.forEach(clearTimeout);
+    };
 };
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -194,15 +198,15 @@ Be their caring friend.`}],
     const userMsg = text.trim().toLowerCase();
     setMessages(prev => [...prev, { role: "user", text: text.trim() }]);
     setInput("");
-
+    let cleanup
     try {
       if (userMsg.includes("india news") || userMsg.includes("national") || userMsg.includes("news about India")) {
-        await readNews("country");
+        cleanup = await readNews("country");
       }
       else if (userMsg.includes("world news") || userMsg.includes("international")) {
-        await readNews("world");
+        cleanup = await readNews("world");
       }else if (/news|headlines|update|what'?s happening/i.test(userMsg)) {
-        await readNews("local");
+        cleanup = await readNews("local");
       }
       else {
         const reply = await getAIResponse(text.trim());
