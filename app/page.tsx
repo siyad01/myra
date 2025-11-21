@@ -36,10 +36,11 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const [lastReadHeadlines, setLastReadHeadlines] = useState<string[]>([]);
-
+  const [isMounted, setIsMounted] = useState(false); // 👈 ADD THIS
   const isProcessing = useRef(false);
 
   useEffect(() => {
+    setIsMounted(true); // 👈 ADD THIS
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -261,10 +262,17 @@ How are you feeling today, darling?`;
           <h1 className="text-3xl font-light">Myra</h1>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-light tracking-wider bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-            {formatTime()}
-          </div>
-          <div className="text-sm text-gray-500">{format(currentTime, "EEEE, MMMM d")}</div>
+          {isMounted ? ( // 👈 CHECK IS MOUNTED
+            <>
+              <div className="text-2xl font-light tracking-wider bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                {formatTime()}
+              </div>
+              <div className="text-sm text-gray-500">{format(currentTime, "EEEE, MMMM d")}</div>
+            </>
+          ) : (
+            // Render a placeholder that doesn't rely on `currentTime` until mounted
+            <div className="text-sm text-gray-500">Loading...</div>
+          )}
         </div>
       </header>
 
