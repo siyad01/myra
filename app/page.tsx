@@ -8,7 +8,7 @@ import { Mic, Send, CloudRain, Cloud, Sun, Wind, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY || "",
+  apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "",
   baseURL: "https://openrouter.ai/api/v1",
   dangerouslyAllowBrowser: true,
 });
@@ -254,7 +254,7 @@ Be their caring friend.`}],
   const completeSetup = async () => {
     if (!name.trim() || !city.trim()) return;
     setIsSetupDone(true);
-    getWeather(city);
+    await getWeather(city);
 
     const { text: greeting } = getGreeting();
     const welcome = `${greeting}, ${name}! I'm Myra, your personal friend from ${city}.
