@@ -284,11 +284,11 @@ How are you feeling today, darling?`;
       {/* Header with Live Clock */}
       <header className="relative p-5 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-9 h-9 bg-linear-to-br from-pink-500 to-purple-600 rounded-xl" />
+          <div className="w-9 h-9 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl" />
           <h1 className="text-3xl font-light">Myra</h1>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-light tracking-wider bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="text-2xl font-light tracking-wider bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
             {formatTime()}
           </div>
           <div className="text-sm text-gray-500">{format(currentTime, "EEEE, MMMM d")}</div>
