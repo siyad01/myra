@@ -34,6 +34,8 @@ export default function Home() {
   const [isThinking, setIsThinking] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+  const [lastReadHeadlines, setLastReadHeadlines] = useState<string[]>([]);
+
   const isProcessing = useRef(false);
 
   // Update clock every second
@@ -123,6 +125,8 @@ export default function Home() {
 
     try {
       const headlines = await getNews(scope);
+      setLastReadHeadlines(headlines); // Remember these headlines!
+
       const greeting = getGreeting();
       // THIS IS THE FIX — use correct intro based on scope
       let intro = "";
@@ -177,11 +181,18 @@ export default function Home() {
 It's ${formatTime()} (${greeting}). Speak in a ${tone} tone.
 Talking to ${name} from ${city}.
 Current weather: ${weather?.temp}°C, ${weather?.desc}.
+
+${lastReadHeadlines.length > 0 ? `These were the last headlines I shared:
+${lastReadHeadlines.map((h, i) => `${i + 1}. ${h}`).join("\n")}
+
+` : ""}
+
 User said: "${userText}"
-Reply naturally and lovingly in English to any queries. If they say "explain news 1", "explain headline 2", etc. — explain that news in detail.
+Reply naturally and lovingly in English. 
+If they say "explain news 1", "tell me more about headline 3", "what about number 2", etc., explain that specific news in detail using your knowledge.
 Be their caring friend.`}],
         temperature: 0.85,
-        max_tokens: 320,
+        max_tokens: 400,
       });
       return response.choices[0]?.message?.content?.trim() || "I'm right here for you, darling.";
     } catch {
@@ -200,6 +211,29 @@ Be their caring friend.`}],
     setInput("");
     let cleanup
     try {
+
+      if (/explain\s+(news|headline)?\s*(\d+)/i.test(userMsg) ||
+          /tell\s+me\s+(about|more\s+about|more\s+about)\s*(news|headline)?\s*(\d+)/i.test(userMsg) ||
+          /what\s+about\s*(news|headline)?\s*(\d+)/i.test(userMsg) ||
+          /number\s*(\d+)/i.test(userMsg)) {
+
+        const match = userMsg.match(/(\d+)/);
+        const num = match ? parseInt(match[1]) : null;
+
+        if (num && num >= 1 && num <= lastReadHeadlines.length) {
+          const headline = lastReadHeadlines[num - 1];
+          const reply = await getAIResponse(`Please explain this news in detail: "${headline}"`);
+          setMessages(prev => [...prev, { role: "assistant", text: reply }]);
+          speak(reply);
+          return;
+        } else {
+          const reply = "Hmm, I don't think I have that news number, darling. Try saying 'explain news 1' or 'tell me about number 3'";
+          setMessages(prev => [...prev, { role: "assistant", text: reply }]);
+          speak(reply);
+          return;
+        }
+      }
+
       if (userMsg.includes("india news") || userMsg.includes("national") || userMsg.includes("news about India")) {
         cleanup = await readNews("country");
       }
@@ -216,7 +250,6 @@ Be their caring friend.`}],
     } catch (err) {
       console.error("Handle input error:", err);
     } finally {
-      // ONLY HERE — reset everything
       setIsThinking(false);
       isProcessing.current = false;
     }
