@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// app/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import OpenAI from "openai";
 import { Mic, Send, CloudRain, Cloud, Sun, Wind, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import ChatClient from "./chatClient";
 
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "",
@@ -17,7 +19,6 @@ interface Weather {
   temp: string;
   desc: string;
   feelsLike: string;
-  localObsDateTime?: string;
 }
 
 export default function Home() {
@@ -38,7 +39,6 @@ export default function Home() {
 
   const isProcessing = useRef(false);
 
-  // Update clock every second
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -54,7 +54,6 @@ export default function Home() {
 
   const formatTime = () => format(currentTime, "h:mm a");
 
-  // Soft, warm female voice
   const speak = useCallback((text: string) => {
     if (!text || useTextMode || isSpeaking) return;
     window.speechSynthesis.cancel();
@@ -79,18 +78,12 @@ export default function Home() {
 
   const getWeather = async (cityName: string) => {
     setIsWeatherLoading(true);
-    const controller = new AbortController();
-    setTimeout(() => controller.abort(), 10000);
     try {
-      const res = await fetch(`https://wttr.in/${encodeURIComponent(cityName)}?format=j1`, { signal: controller.signal });
-      const data = await res.json();
-      const c = data.current_condition[0];
-      setWeather({
-        temp: c.temp_C,
-        desc: c.weatherDesc[0].value,
-        feelsLike: c.FeelsLikeC,
-        localObsDateTime: data.nearest_area?.[0]?.localObsDateTime || c.localObsDateTime,
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(cityName)}`, {
+        cache: "no-store",
       });
+      const data = await res.json();
+      setWeather(data);
     } catch {
       setWeather({ temp: "28", desc: "Sunny", feelsLike: "30" });
     } finally {
@@ -101,17 +94,16 @@ export default function Home() {
   const getNews = async (scope: "local" | "country" | "world" = "local") => {
     setIsNewsLoading(true);
     try {
-      const url = scope === "local" 
-    ? `/api/news?city=${encodeURIComponent(city)}&scope=local`
-    : `/api/news?scope=${scope}`; 
+      const url = scope === "local"
+        ? `/api/news?city=${encodeURIComponent(city)}&scope=local`
+        : `/api/news?scope=${scope}`;
       const res = await fetch(url, { cache: "no-store" });
       const data = await res.json();
       const headlines = data.news
-      .split(" • ")
-      .map((h: string) => h.trim())
-      .filter(Boolean)
-      .slice(0, 5);
-
+        .split(" • ")
+        .map((h: string) => h.trim())
+        .filter(Boolean)
+        .slice(0, 5);
       return headlines.length > 0 ? headlines : ["Latest updates", "All good in your city"];
     } catch {
       return ["Breaking news from India", "Markets open strong", "Beautiful day ahead"];
@@ -122,39 +114,35 @@ export default function Home() {
 
   const readNews = async (scope: "local" | "country" | "world" = "local") => {
     const timeouts: NodeJS.Timeout[] = [];
-
     try {
       const headlines = await getNews(scope);
-      setLastReadHeadlines(headlines); // Remember these headlines!
+      setLastReadHeadlines(headlines);
 
       const greeting = getGreeting();
-      // THIS IS THE FIX — use correct intro based on scope
       let intro = "";
-      if (scope === "local") {
-        intro = `${greeting.text}, ${name}! Here are the top stories from ${city}...`;
-      } else if (scope === "country") {
-        intro = `${greeting.text}, sweetheart! Here's what's happening across India...`;
-      } else {
-        intro = `${greeting.text}, darling! Let me share the biggest global stories from around the world...`;
-      }
+      if (scope === "local") intro = `${greeting.text}, ${name}! Here are the top stories from ${city}...`;
+      else if (scope === "country") intro = `${greeting.text}, sweetheart! Here's what's happening across India...`;
+      else intro = `${greeting.text}, darling! Let me share the biggest global stories from around the world...`;
 
       setMessages(prev => [...prev, { role: "assistant", text: intro }]);
       speak(intro);
 
-      headlines.forEach((h: string, i: number) => {
-        const timeout = setTimeout(() => {
+      headlines.forEach((h: any, i: number) => {
+        const t = setTimeout(() => {
           const line = `${i + 1}. ${h}`;
           setMessages(prev => [...prev, { role: "assistant", text: line }]);
           speak(line);
         }, (i + 1) * 7500);
-        timeouts.push(timeout)
+        timeouts.push(t);
       });
     } catch (error) {
-      console.error("News reading failed:", error);
-      setMessages(prev => [...prev, { role: "assistant", text: "I'm having a little trouble reading the news right now, darling." }]);
-      speak("I'm having a little trouble reading the news right now, darling.");
+      const msg = "I'm having a little trouble reading the news right now, darling.";
+      setMessages(prev => [...prev, { role: "assistant", text: msg }]);
+      speak(msg);
     }
-};
+    return () => timeouts.forEach(clearTimeout);
+  };
+
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { setUseTextMode(true); return; }
@@ -174,22 +162,23 @@ export default function Home() {
       const response = await openai.chat.completions.create({
         model: "mistralai/mistral-7b-instruct:free",
         messages: [{
-          role: "user", content: `You are Myra, a warm, loving female friend.
+          role: "user",
+          content: `You are Myra, a warm, loving female friend.
 It's ${formatTime()} (${greeting}). Speak in a ${tone} tone.
 Talking to ${name} from ${city}.
 Current weather: ${weather?.temp}°C, ${weather?.desc}.
 
-${lastReadHeadlines.length > 0 ? `These were the last headlines I shared:
-${lastReadHeadlines.map((h, i) => `${i + 1}. ${h}`).join("\n")}
-
-` : ""}
+${lastReadHeadlines.length > 0 ? `Last headlines shared:\n${lastReadHeadlines.map((h, i) => `${i + 1}. ${h}`).join("\n")}\n` : ""}
 
 User said: "${userText}"
-Reply naturally and lovingly in English. 
-If they say "explain news 1", "tell me more about headline 3", "what about number 2", etc., explain that specific news in detail using your knowledge.
-Be their caring friend.`}],
+Reply naturally and lovingly in English.
+If they say "explain news 1", explain that specific headline in detail. Never output XML tags like <s> or </s>.
+Be their caring friend.`
+        }],
         temperature: 0.85,
         max_tokens: 400,
+        stop: ["</s>", "<s>", "[INST]", "[/INST]"],
+        presence_penalty: 0.1,
       });
       return response.choices[0]?.message?.content?.trim() || "I'm right here for you, darling.";
     } catch {
@@ -199,23 +188,17 @@ Be their caring friend.`}],
 
   const handleInput = async (text: string) => {
     if (!text.trim() || isProcessing.current) return;
-
     isProcessing.current = true;
     setIsThinking(true);
 
     const userMsg = text.trim().toLowerCase();
     setMessages(prev => [...prev, { role: "user", text: text.trim() }]);
     setInput("");
+
     try {
-
-      if (/explain\s+(news|headline)?\s*(\d+)/i.test(userMsg) ||
-          /tell\s+me\s+(about|more\s+about|more\s+about)\s*(news|headline)?\s*(\d+)/i.test(userMsg) ||
-          /what\s+about\s*(news|headline)?\s*(\d+)/i.test(userMsg) ||
-          /number\s*(\d+)/i.test(userMsg)) {
-
+      if (/explain.*\d+|tell.*\d+|number\s*\d+|what.*\d+/i.test(userMsg)) {
         const match = userMsg.match(/(\d+)/);
         const num = match ? parseInt(match[1]) : null;
-
         if (num && num >= 1 && num <= lastReadHeadlines.length) {
           const headline = lastReadHeadlines[num - 1];
           const reply = await getAIResponse(`Please explain this news in detail: "${headline}"`);
@@ -223,33 +206,28 @@ Be their caring friend.`}],
           speak(reply);
           return;
         } else {
-          const reply = "Hmm, I don't think I have that news number, darling. Try saying 'explain news 1' or 'tell me about number 3'";
+          const reply = "Hmm, I don't think I have that news number, darling. Try saying 'explain news 1'";
           setMessages(prev => [...prev, { role: "assistant", text: reply }]);
           speak(reply);
           return;
         }
       }
 
-      if (userMsg.includes("india news") || userMsg.includes("national") || userMsg.includes("news about India")) {
-        await readNews("country");
-      }
-      else if (userMsg.includes("world news") || userMsg.includes("international")) {
-        await readNews("world");
-      }else if (/news|headlines|update|what'?s happening/i.test(userMsg)) {
-        await readNews("local");
-      }
+      if (userMsg.includes("india news") || userMsg.includes("national")) await readNews("country");
+      else if (userMsg.includes("world news") || userMsg.includes("international")) await readNews("world");
+      else if (/news|headlines|update|what'?s happening/i.test(userMsg)) await readNews("local");
       else {
         const reply = await getAIResponse(text.trim());
         setMessages(prev => [...prev, { role: "assistant", text: reply }]);
         speak(reply);
       }
     } catch (err) {
-      console.error("Handle input error:", err);
+      console.error(err);
     } finally {
       setIsThinking(false);
       isProcessing.current = false;
     }
-};
+  };
 
   const completeSetup = async () => {
     if (!name.trim() || !city.trim()) return;
@@ -277,7 +255,6 @@ How are you feeling today, darling?`;
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-      {/* Header with Live Clock */}
       <header className="relative p-5 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-9 h-9 bg-gradient-to-br from-pink-500 to-purple-600 rounded-xl" />
@@ -311,11 +288,9 @@ How are you feeling today, darling?`;
         </div>
       ) : (
         <>
-          {/* Hero with Weather Loading */}
           <div className="py-10 text-center flex-1 flex flex-col items-center justify-center px-6">
             <h1 className="text-4xl md:text-6xl font-light leading-tight mb-2">Hello, {name}</h1>
             <p className="text-2xl text-gray-400 mb-6">{city}</p>
-
             {isWeatherLoading ? (
               <div className="flex items-center gap-4 text-xl">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
@@ -331,26 +306,9 @@ How are you feeling today, darling?`;
             )}
           </div>
 
-          {/* Chat */}
-          <div className="flex-1 overflow-y-auto px-6 pb-4 max-w-4xl mx-auto w-full">
-            {messages.map((msg, i) => (
-              <div key={i} className={`flex mb-4 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-lg px-6 py-4 rounded-3xl ${msg.role === "user" ? "bg-white text-black" : "bg-gray-900 border border-gray-800 text-gray-100"}`}>
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-            {isThinking && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-gray-900 border border-gray-800 px-6 py-4 rounded-3xl flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Myra is thinking...</span>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* CLIENT-ONLY CHAT — NO MORE #418 */}
+          <ChatClient messages={messages} isThinking={isThinking} />
 
-          {/* Input + News Button */}
           <div className="border-t border-gray-800 p-5">
             <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-4">
               <div className="flex-1 w-full flex items-center gap-4 bg-gray-900/70 backdrop-blur-xl border border-gray-800 rounded-full px-6 py-4">
