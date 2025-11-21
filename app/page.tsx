@@ -154,9 +154,6 @@ export default function Home() {
       setMessages(prev => [...prev, { role: "assistant", text: "I'm having a little trouble reading the news right now, darling." }]);
       speak("I'm having a little trouble reading the news right now, darling.");
     }
-    return () => {
-      timeouts.forEach(clearTimeout);
-    };
 };
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -209,7 +206,6 @@ Be their caring friend.`}],
     const userMsg = text.trim().toLowerCase();
     setMessages(prev => [...prev, { role: "user", text: text.trim() }]);
     setInput("");
-    let cleanup
     try {
 
       if (/explain\s+(news|headline)?\s*(\d+)/i.test(userMsg) ||
@@ -235,12 +231,12 @@ Be their caring friend.`}],
       }
 
       if (userMsg.includes("india news") || userMsg.includes("national") || userMsg.includes("news about India")) {
-        cleanup = await readNews("country");
+        await readNews("country");
       }
       else if (userMsg.includes("world news") || userMsg.includes("international")) {
-        cleanup = await readNews("world");
+        await readNews("world");
       }else if (/news|headlines|update|what'?s happening/i.test(userMsg)) {
-        cleanup = await readNews("local");
+        await readNews("local");
       }
       else {
         const reply = await getAIResponse(text.trim());
@@ -258,7 +254,7 @@ Be their caring friend.`}],
   const completeSetup = async () => {
     if (!name.trim() || !city.trim()) return;
     setIsSetupDone(true);
-    await getWeather(city);
+    getWeather(city);
 
     const { text: greeting } = getGreeting();
     const welcome = `${greeting}, ${name}! I'm Myra, your personal friend from ${city}.
